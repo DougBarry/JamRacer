@@ -1,3 +1,7 @@
+'''
+A class overloading the Generic joypad class, for a specific type of gamepad
+'''
+
 from ObjectMotion import *
 from InputPyGameGenericJoystick import *
 

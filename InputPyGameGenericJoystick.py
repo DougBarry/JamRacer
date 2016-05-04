@@ -1,11 +1,13 @@
+'''
+A class for generic USB gamepads, as provided by the PyGame library, overloading the ControllerBase class.
+'''
+
 import pygame
 from ObjectMotion import *
 from InputControllerBase import *
 
-
 class JoystickNotConnectedException(Exception):
     pass
-
 
 class PyGameJoystickController(ControllerBase):
 
@@ -18,8 +20,8 @@ class PyGameJoystickController(ControllerBase):
 
     def get_motion(self, motion_type = MTYPE_CARSTEER):
         """
-        by default return car type motions
-        joystick can do all motion types maybe?
+        Return motion. By default return Car motion types, but support others
+        If a button is depressed, speed boost is supported
         """
 
         direction = DDIR_STATIONARY

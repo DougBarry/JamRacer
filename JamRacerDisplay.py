@@ -1,7 +1,8 @@
 import pygame
 import sys
 
-class iRacerDisplay:
+class JamRacerDisplay:
+    '''An unused visual representation of the states of inputs and outputs'''
     # Define some colors
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
@@ -13,7 +14,7 @@ class iRacerDisplay:
     def Setup(self):
         self.screen = pygame.display.set_mode((400,300))
         self.font = pygame.font.SysFont("Courier", 20)
-        pygame.display.set_caption('Robotics multi in multi out')
+        pygame.display.set_caption('JamRacer')
         clock = pygame.time.Clock()
 
     def Draw(self):

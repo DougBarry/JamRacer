@@ -1,6 +1,9 @@
+'''
+Helper methods and classes
+'''
+
 import time
 
-# Hex math helper
 def add_hex2(hex1, hex2):
     """add two hexadecimal string values and return as such"""
     return hex(int(hex1, 16) + int(hex2, 16))

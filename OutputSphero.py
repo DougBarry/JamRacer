@@ -1,10 +1,10 @@
 import bluetooth
 from ObjectMotion import *
-import iRacerConfig
+import JamRacerConfig
 from Helpers import *
 import logging
 import time
-import request
+import SpheroRequest
 import struct
 from OutputRobotBase import *
 from random import randint
@@ -110,18 +110,18 @@ class Sphero(BluetoothRobotBase):
     # CORE COMMANDS
 
     def ping(self):
-        return self.__write(request.Ping(self.seq))
+        return self.__write(SpheroRequest.Ping(self.seq))
 
     def set_rgb(self, colour):
         persistant = False
         logging.debug("Sphero: " + self._bluetooth_address + " setting colour to " + hex(colour.red) + hex(colour.green) + hex(colour.blue))
-        return self.__write(request.SetRGB(self.seq, int(colour.red), int(colour.green), int(colour.blue), 0x01 if persistant else 0x00))
+        return self.__write(SpheroRequest.SetRGB(self.seq, int(colour.red), int(colour.green), int(colour.blue), 0x01 if persistant else 0x00))
 
     # def set_rgb(self, r, g, b, persistant=False):
         # return self.write(request.SetRGB(self.seq, r, g, b, 0x01 if persistant else 0x00))
 
     def get_rgb(self):
-        return self.__write(request.GetRGB(self.seq))
+        return self.__write(SpheroRequest.GetRGB(self.seq))
 
     def get_version(self):
         raise NotImplementedError
@@ -135,10 +135,10 @@ class Sphero(BluetoothRobotBase):
     def set_device_name(self, newname):
         """ Sets internal device name. (not announced bluetooth name).
         requires utf-8 encoded string. """
-        return self.__write(request.SetDeviceName(self.seq, *self.__prep_str(newname)))
+        return self.__write(SpheroRequest.SetDeviceName(self.seq, *self.__prep_str(newname)))
 
     def get_bluetooth_info(self):
-        return self.__write(request.GetBluetoothInfo(self.seq))
+        return self.__write(SpheroRequest.GetBluetoothInfo(self.seq))
 
     def set_auto_reconnect(self):
         raise NotImplementedError
@@ -153,7 +153,7 @@ class Sphero(BluetoothRobotBase):
         raise NotImplementedError
 
     def sleep(self, wakeup=0, macro=0, orbbasic=0):
-        return self.__write(request.Sleep(self.seq, wakeup, macro, orbbasic))
+        return self.__write(SpheroRequest.Sleep(self.seq, wakeup, macro, orbbasic))
 
     def get_voltage_trip_points(self):
         raise NotImplementedError
@@ -186,10 +186,10 @@ class Sphero(BluetoothRobotBase):
 
     def set_heading(self, value):
         """value can be between 0 and 359"""
-        return self.__write(request.SetHeading(self.seq, value))
+        return self.__write(SpheroRequest.SetHeading(self.seq, value))
 
     def set_stabilization(self, state):
-        return self.__write(request.SetStabilization(self.seq, state))
+        return self.__write(SpheroRequest.SetStabilization(self.seq, state))
 
     def set_rotation_rate(self, val):
         """value ca be between 0x00 and 0xFF:
@@ -197,7 +197,7 @@ class Sphero(BluetoothRobotBase):
             0   --> 1 degrees/s
             255 --> jumps to 400 degrees/s
         """
-        return self.__write(request.SetRotationRate(self.seq, val))
+        return self.__write(SpheroRequest.SetRotationRate(self.seq, val))
 
     def set_application_configuration_block(self):
         raise NotImplementedError
@@ -225,7 +225,7 @@ class Sphero(BluetoothRobotBase):
 
     def set_back_led_output(self, value):
         """value can be between 0x00 and 0xFF"""
-        return self.__write(request.SetBackLEDOutput(self.seq, value))
+        return self.__write(SpheroRequest.SetBackLEDOutput(self.seq, value))
 
     def roll(self, heading, state=1):
         """
@@ -241,7 +241,7 @@ class Sphero(BluetoothRobotBase):
 
         logging.debug("Sphero roll dir %i " % heading)
         logging.debug("Sphero roll speed %i " % myspeed)
-        return self.__write(request.Roll(self.seq, myspeed, heading, state))
+        return self.__write(SpheroRequest.Roll(self.seq, myspeed, heading, state))
 
     def roll(self, speed, heading, state=1):
         """
@@ -251,7 +251,7 @@ class Sphero(BluetoothRobotBase):
         """
         logging.debug("Sphero roll dir %i " % heading)
         logging.debug("Sphero roll speed %i " % speed)
-        return self.__write(request.Roll(self.seq, speed, heading, state))
+        return self.__write(SpheroRequest.Roll(self.seq, speed, heading, state))
 
     def stop(self):
         return self.roll(0,0)
@@ -273,11 +273,11 @@ class Sphero(BluetoothRobotBase):
 
 
     def setBackLED(self,intensity):
-        return self.__write(request.SetBackLEDOutput(self.seq, intensity))
+        return self.__write(SpheroRequest.SetBackLEDOutput(self.seq, intensity))
         # return self.sendCommand(0x02, 0x21, 0x04, 0x02, intensity)
 
     def rotateHeadingBy(self,heading):
-        return self.__write(request.SetHeading(self.seq, (heading >> 8), (heading & 0xff)))
+        return self.__write(SpheroRequest.SetHeading(self.seq, (heading >> 8), (heading & 0xff)))
 
     # def setMotorPowers(self,p1,p2):
         # dir1 = 0x01

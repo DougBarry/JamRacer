@@ -1,6 +1,6 @@
 # coding: utf-8
 import struct
-import response
+import SpheroResponse
 
 
 class Request(object):
@@ -45,7 +45,7 @@ class Request(object):
 
     def response(self, header, body):
         name = self.__class__.__name__.split('.')[-1]
-        klass = getattr(response, name, response.Response)
+        klass = getattr(SpheroResponse, name, SpheroResponse.Response)
         return klass(header, body)
 
 

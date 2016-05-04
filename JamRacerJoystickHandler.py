@@ -1,7 +1,8 @@
 import pygame
 from InputTrustUSBGamepad import *
 
-class iRacerJoystickHandler(object):
+class JamRacerJoystickHandler(object):
+    '''A class to handle the initialisation and usage of USB joypads'''
 
     def __init__(self):
         pygame.joystick.init()

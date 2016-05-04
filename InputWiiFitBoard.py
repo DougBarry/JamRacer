@@ -1,6 +1,23 @@
+'''
+A class providing an input object for the Nintendo Wii Fit Balance Board over Bluetooth
+This class is an amalgomation over several years from many many sources.
+I have modified it to work and tested it with Python 2.7 on Bluez5 on Raspbian on a Raspberry Pi B (V1) only.
+Your milage may vary.
+
+A non-comprehensive list of sources and inspiration:
+https://www.mattcutts.com/blog/linux-wii-balanceboard/
+https://www.stavros.io/posts/your-weight-online/
+https://dani33l.wordpress.com/2012/11/11/using-python-with-balance-board-ubuntu/
+https://github.com/abstrakraft/cwiid
+http://conoroneill.net/controlling-an-i-racer-rc-car-using-a-wii-balance-board-and-raspberry_pi/
+
+From here on, 'WFB' is used to refer to the physical Nintendo Wii Fit Board
+
+'''
+
 from ObjectMotion import *
 #import ObjectMotion
-import iRacerConfig
+import JamRacerConfig
 import logging
 import time
 import bluetooth
@@ -35,6 +52,9 @@ WIIFIT_STATUS_DISCONNECTING = 'Disconnecting'
 WIIFIT_STATUS_DISCONNECTED = 'Disconnected'
 
 class WiiFitBoardEvent:
+    '''
+    Class for passing events relating to the WFB around
+    '''
     def __init__(self, topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased):
 
         self.topLeft = topLeft
@@ -47,17 +67,27 @@ class WiiFitBoardEvent:
         self.totalWeight = topLeft + topRight + bottomLeft + bottomRight
 
 
+#Usefull for error handling
 class WiiFitBoardNotConnected(Exception):
     pass
 
 class WiiFitBoardCommunicationError(Exception):
     pass
 
-
+#Main Class
 class WiiFitBoard(ControllerBase):
+    '''
+    Main Class, defining some default calibrations relating to my board in particular.
+    I have not found a way of causing the WFB to reliably go into calibration mode and update the values in
+    its EEPROM. I have had to make do with occasionally hooking it up to a real Wii and using the Wii Fit disc.
+    Connecting to the Wii Fit board is conveluted, involving pressing the boards red pairing button when this routine
+    first attempts to connect to it. Every time. I have been unable to cause it to pair properly without this action.
+    '''
     maximum_connect_retry_count = 5
+    '''Number of times to retry connecting'''
 
     minimum_active_mass = 3
+    '''Any detected mass less than this is ignored, such as the weight of a single foot resting atop on a bent knee'''
     minimum_lean_ratio_f = 1.3
     minimum_lean_ratio_b = 2.7
     minimum_lean_ratio_l = 1.7
@@ -67,6 +97,7 @@ class WiiFitBoard(ControllerBase):
     maximum_lean_ratio = 10
 
     def __init__(self,bluetooth_address):
+        '''Construction of the object, fill in default values to help us later'''
         self._bluetooth_address = bluetooth_address
         self._calibration = []
         self._calibration_requested = False
@@ -89,10 +120,14 @@ class WiiFitBoard(ControllerBase):
 
     @property
     def name(self):
+        '''Override parent property such that the BT address is also returned'''
         return self.controller_name + ' ' + self._bluetooth_address
 
     def connect(self):
+        '''Attempt to connect to the board'''
+
         if self._bluetooth_address is None:
+            #Error handling
             raise WiiFitBoardCommunicationError("Bluetooth MAC Address not set")
 
         self.__set_status(WIIFIT_STATUS_CONNECTING)
@@ -102,9 +137,9 @@ class WiiFitBoard(ControllerBase):
         connection_retry = False
 
         while connection_attempt_count < WiiFitBoard.maximum_connect_retry_count:
+            #Warn the user to press the button
             logging.warning("Press Red Sync Button in Battery Compartment of Balance Board...")
             time.sleep(1)
-            # Wii Balance Board
             try:
                 connection_attempt_count += 1
                 self._receive_socket = bluetooth.BluetoothSocket(bluetooth.L2CAP)
@@ -129,6 +164,7 @@ class WiiFitBoard(ControllerBase):
                     logging.debug(self.name + ' set led sent')
 
             except Exception as ex:
+                #Report errors
                 logging.debug("Error communicating with balance board, trying again... (" + str(connection_attempt_count) + "/" + str(WiiFitBoard.maximum_connect_retry_count) + ")")
                 logging.debug(ex)
                 self._receive_socket = None
@@ -149,15 +185,16 @@ class WiiFitBoard(ControllerBase):
         # end loop
 
         if connection_retry:
-            # looks like it all went bad
+            #Report and fail gracefully
             self.__set_status(WIIFIT_STATUS_DISCONNECTED)
             raise WiiFitBoardNotConnected('Bluetooth connection failed.', self._bluetooth_address)
 
+        #Report success
         logging.debug("Balance board paired")
 
 
     def update(self):
-        # update data
+        '''Update data from WFB'''
         if self.status != WIIFIT_STATUS_CONNECTED:
             raise WiiFitBoardNotConnected()
 
@@ -176,6 +213,7 @@ class WiiFitBoard(ControllerBase):
 
 
     def get_motion(self, motion_type):
+        '''Get desired motion information based on last known WFB state. Not all motion types are supported'''
         if self.status != WIIFIT_STATUS_CONNECTED:
             raise WiiFitBoardNotConnected()
 
@@ -210,6 +248,8 @@ class WiiFitBoard(ControllerBase):
                 biasright = False
                 biasahead = False
                 biasreverse = False
+
+                #Work out the users intention based on board state
 
                 if rightside > leftside:
                     over = float(rightside / leftside)
@@ -259,6 +299,7 @@ class WiiFitBoard(ControllerBase):
 
                 
     def __receive(self):
+        '''Private method to cause data reception'''
         if self.status != WIIFIT_STATUS_CONNECTED:
             raise WiiFitBoardNotConnected()
 
@@ -282,6 +323,7 @@ class WiiFitBoard(ControllerBase):
         # self.disconnect()
 
     def disconnect(self):
+        '''Disconnect gracefully if possible from the WFB'''
         if self.status != WIIFIT_STATUS_CONNECTED:
             raise WiiFitBoardNotConnected()
 
@@ -300,8 +342,8 @@ class WiiFitBoard(ControllerBase):
 
         self.__set_status(WIIFIT_STATUS_DISCONNECTED)
 
-    # Try to discover a Wiiboard
     def discover(self):
+        '''Attempt automatic discover of WFB. UNTESTED'''
         address = None
         discovered_bluetooth_devices = bluetooth.discover_devices(duration=6, lookup_names=True)
         for bluetoothdevice in discovered_bluetooth_devices:
@@ -310,6 +352,7 @@ class WiiFitBoard(ControllerBase):
         return address
 
     def __create_board_event(self, bytes):
+        '''Used to create an instance of the WFB event object with the raw data provided'''
         button_bytes = bytes[0:2]
         bytes = bytes[2:12]
         button_pressed = False
@@ -340,6 +383,7 @@ class WiiFitBoard(ControllerBase):
         return boardEvent
 
     def __calc_mass(self, raw, pos):
+        '''Form and approximation of the mass present on the WFB taking calibration data into account'''
         val = 0.0
         # calibration[0] is calibration values for 0kg
         # calibration[1] is calibration values for 17kg
@@ -358,6 +402,7 @@ class WiiFitBoard(ControllerBase):
         return val
 
     def __get_button_led(self):
+        '''Is the blue LED on or off'''
         return self._device_led
 
     def __parse_calibration__response(self, bytes):
@@ -375,6 +420,7 @@ class WiiFitBoard(ControllerBase):
     # Send <data> to the Wiiboard
     # <data> should be an array of strings, each string representing a single hex byte
     def __send_command(self, data):
+        '''Send raw data to the WFB over Bluetooth'''
         # this gets used during connection stage for requesting calibration data and setting the led.
         if (self.status == WIIFIT_STATUS_DISCONNECTED) or (self.status == WIIFIT_STATUS_DISCONNECTING):
             raise WiiFitBoardNotConnected()
@@ -388,9 +434,8 @@ class WiiFitBoard(ControllerBase):
 
         self._control_socket.send(senddata)
 
-    # Turns the power button LED on if light is True, off if False
-    # The board must be connected in order to set the light
     def __set_button_led(self, light):
+        '''Set the state of the blue LED on the WFB'''
         if light:
             val = "10"
         else:
@@ -401,6 +446,7 @@ class WiiFitBoard(ControllerBase):
         self._device_led = light
 
     def __calibrate(self):
+        '''This method is unreliable'''
         message = ["00", WII_COMMAND_READ_REGISTER, "04", "A4", "00", "24", "00", "18"]
         self.__send_command(message)
         self._calibration_requested = True
@@ -413,8 +459,10 @@ class WiiFitBoard(ControllerBase):
         time.sleep(millis / 1000.0)
 
     def __set_status(self, status):
+        '''Private method used for status reports'''
         self.__status = status
 
     @property
     def status(self):
+        '''Get status report'''
         return self.__status

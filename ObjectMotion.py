@@ -24,6 +24,7 @@ class BadMotionTypeException(Exception):
 
         
 class ObjectMotion(object):
+    '''Class used to define and describe how an object can or should move'''
     
     def __init__(self,sourceType,motionType,motionDirection,motionSpeed = -1):
         self.sType = sourceType
@@ -52,6 +53,7 @@ class AnalogMotionTranslator(object):
     """
     Defines 2 16 bit signed integers, where the desired speed is the magnitude, and the resultant vector defines the
     direction. This can be used for analogue actors and digital actors (with rounding and approximation of intention)
+    Include appreciation of deadzones.
 
         ypos -
     xpos -.......+

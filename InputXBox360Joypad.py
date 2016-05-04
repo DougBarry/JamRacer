@@ -1,3 +1,9 @@
+'''
+A class overloading the Generic joypad class, specifically for the XBox 360 Joypad
+Tested with wired and wireless XBox 360 Joypads on a Raspberry Pi B (V1)
+Your milage may vary
+'''
+
 import pygame
 from InputPyGameGenericJoystick import *
 from ObjectMotion import *
@@ -9,8 +15,8 @@ class XBox360Joypad(PyGameJoystickController):
 
     def get_motion(self, motion_type = MTYPE_CARSTEER):
         """
-        by default return car type motions
-        joystick can do all motion types maybe?
+        Return motion, by default this produces a car motion using the analogue sticks like Gran Tourismo (steering
+        left stick, accel/brake on right stick. It can also produce tank steer by using the sticks as tank controls.
         """
 
         if (motion_type == MTYPE_CARSTEER) or (motion_type == MTYPE_COMPASS):
